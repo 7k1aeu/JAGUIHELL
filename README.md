@@ -39,8 +39,7 @@ python convert_to_ts.py
 ファイル一覧（主なファイル）
 JAGUIHELL.py — メインまたはユーティリティ群の統括スクリプト。
 BDFconv.py — BDF フォント（.bdf）をJAGUIHELL.pyで使用するグリフ辞書(glyphs.py)に変換するスクリプト。
-feld_hell_fontx2_font_data.py — フォントデータを格納する Python モジュール。
-glyphs.py — 大きなグリフデータ（Python 形式）。
+glyphs.py — 日本語フォントを持つグリフデータ（Python 形式）。
 glyphs.ts — TypeScript 形式のグリフデータ。
 k8x12.bdf — BDF 形式フォントファイル。
 convert_to_ts.py — Python から TypeScript へ変換する補助スクリプト。
