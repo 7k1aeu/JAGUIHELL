@@ -1,12 +1,12 @@
-JAGUIHELL
 概要
 JAGUIHELL　文字通信方式であるヘルシュライバーの送信ソフトウェアである。またいくつかの関連ソフトウェアを含んでいる。
 特徴としては日本語(漢字およびかなとASCII)の送信が可能である。ヘルシュライバーは画像通信であり、フォーマットは＊＊に設定されているため任意のHELL受信ソフトウェアで受信が可能である。
 
-
-はフォント／グリフデータを扱うユーティリティ群と関連ファイルを収めたリポジトリです。主に BDF フォントの変換、フォントデータの生成（Python / TypeScript 向け）、およびグリフデータの格納を目的としています。
-
 インストール
+Windowsの場合　JAGUIHELL.exe　をダウンロードして実行してください(Python実行環境を含んだファイルのため巨大です）
+
+それ以外の環境ではPythonのソースをダウンロードして実行してください。
+
 リポジトリをクローン：
 bash
 git clone https://github.com/7k1aeu/JAGUIHELL.git
@@ -32,18 +32,14 @@ bash
 python BDFconv.py k8x12.bdf
 上記は BDF ファイルをリポジトリ内で利用可能な形式に変換する想定の例です。実際の引数や出力はスクリプト内の説明を参照してください。
 
-TypeScript 用データへの変換（補助スクリプト）：
-
-bash
-python convert_to_ts.py
 ファイル一覧（主なファイル）
-JAGUIHELL.py — メインまたはユーティリティ群の統括スクリプト。
+JAGUIHELL.py — メインスクリプト。
 
-BDFconv.py — BDF フォント（.bdf）をJAGUIHELL.pyで使用するグリフ辞書(glyphs.py)に変換するスクリプト。
+BDFconv.py — BDF フォント（.bdf）をJAGUIHELL.pyで使用するグリフ辞書(glyphs.py)に変換するスクリプト。通常は使いません。
 
 glyphs.py — 日本語フォントを持つグリフデータ（Python 形式）。
 
-k8x12.bdf — BDF 形式フォントファイル。
+k8x12.bdf — BDF 形式フォントファイル。これも通常は使いません。
 ここから使用しています　https://littlelimit.net/k8x12.htm
 ライセンス条件に付いてはフリーライセンスです　https://littlelimit.net/font.htm#license
 
