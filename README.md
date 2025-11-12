@@ -14,7 +14,7 @@
 ## インストール
 
 ### Windows （配布実行ファイル）
-- `JAGUIHELL.exe` をダウンロードして実行してください（Python を含むためファイルサイズが大きくなります）。
+-[`JAGUIHELL.exe`](https://github.com/7k1aeu/JAGUIHELL/releases/latest/download/JAGUIHELL.exe)  をダウンロードして実行してください（Python を含むためファイルサイズが大きくなります）。
 
 ### ソースから実行（その他の環境）
 1. リポジトリをクローン:

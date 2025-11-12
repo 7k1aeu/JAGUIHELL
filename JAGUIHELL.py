@@ -486,7 +486,8 @@ class HellschreiberGUI:
         )
         self.output_display.pack(padx=10, pady=5, fill='x')
         
-        # タグ設定        self.output_display.tag_configure("pending", foreground="gray")
+        # タグ設定
+        self.output_display.tag_configure("pending", foreground="gray")
         self.output_display.tag_configure("sent", foreground="red")
 
         # 音声ストリーム
@@ -502,6 +503,22 @@ class HellschreiberGUI:
         if not text:
             self.send_button.config(state='normal')
             return
+
+        # 出力デバイスが選択されているか確認
+        device_id = self.get_selected_device_id()
+        if device_id is None:
+            messagebox.showerror("エラー", "出力デバイスが選択されていません。設定を確認してください。")
+            return
+
+        # 先にオーディオストリームを初期化しておく（失敗時は通知して中止）
+        try:
+            self._initialize_audio_stream(device_id)
+        except Exception as e:
+            message = f"オーディオストリームの初期化に失敗しました: {e}"
+            print(message)
+            messagebox.showerror("エラー", message)
+            return
+
         self.send_button.config(state='disabled')
 
         # プレフィックスとサフィックスを追加したテキストを表示
@@ -524,99 +541,131 @@ class HellschreiberGUI:
         return None
         
     def _initialize_audio_stream(self, device_id: int) -> None:
-        """音声出力ストリームを初期化"""
+        """音声出力ストリームを初期化（例外を上位に伝える）"""
         with self.stream_lock:
-            if self.audio_stream is not None:
-                self.audio_stream.close()
-            
-            # バッファサイズを最適化
-            optimal_buffer = SAMPLES_PER_CHAR
-            self.audio_stream = sd.OutputStream(
-                samplerate=SAMPLE_RATE,
-                device=device_id,
-                channels=1,
-                blocksize=optimal_buffer,
-                latency='low',  # レイテンシーを低く設定
-                dtype=np.float32
-            )
-            self.audio_stream.start()
+            try:
+                if self.audio_stream is not None:
+                    try:
+                        self.audio_stream.close()
+                    except Exception:
+                        pass
+                    self.audio_stream = None
+
+                # ブロックサイズを小さくしてレイテンシーを減らす
+                blocksize = SAMPLES_PER_PIXEL
+                self.audio_stream = sd.OutputStream(
+                    samplerate=SAMPLE_RATE,
+                    device=device_id,
+                    channels=1,
+                    blocksize=blocksize,
+                    latency='low',
+                    dtype=np.float32
+                )
+                self.audio_stream.start()
+            except Exception:
+                try:
+                    if self.audio_stream is not None:
+                        self.audio_stream.close()
+                except Exception:
+                    pass
+                self.audio_stream = None
+                raise
 
     def _play_waves(self, waves: List[np.ndarray]) -> None:
-        """波形データのリストを再生する"""
+        """波形データのリストを再生する（余分なパディングをせずチャンク単位で書き込む）"""
         if not waves:
             return
-            
+
         device_id = self.get_selected_device_id()
         if device_id is None:
             raise Exception("出力デバイスが選択されていません")
-        
+
         try:
-            # ストリームの初期化
             if self.audio_stream is None:
                 self._initialize_audio_stream(device_id)
-            
-            if self.audio_stream is None:  # 初期化に失敗した場合
+            if self.audio_stream is None:
                 raise Exception("音声ストリームの初期化に失敗しました")
-            
-            # 波形を連結
+
             combined_wave = np.concatenate(waves)
-            
-            # 音量を適用
-            volume_factor = 10 ** (self.volume_level / 20)  # dBからリニアスケールに変換
+            volume_factor = 10 ** (self.volume_level / 20)
             adjusted_wave = combined_wave * volume_factor
 
-            # バッファサイズの倍数になるように0で埋める
-            total_samples = len(adjusted_wave)
-            padding_samples = (BUFFER_SAMPLES - (total_samples % BUFFER_SAMPLES)) % BUFFER_SAMPLES
-            if padding_samples > 0:
-                adjusted_wave = np.concatenate([adjusted_wave, np.zeros(padding_samples, dtype=np.float32)])
-            
-            # バッファサイズ単位で分割して再生
+            # ゼロパディングは行わない。小さなチャンクに分けて順次書き込む。
+            chunk_size = max(1, SAMPLES_PER_PIXEL * 8)
             with self.stream_lock:
-                for i in range(0, len(adjusted_wave), BUFFER_SAMPLES):
-                    chunk = adjusted_wave[i:i + BUFFER_SAMPLES]
+                for i in range(0, len(adjusted_wave), chunk_size):
+                    chunk = adjusted_wave[i:i + chunk_size]
                     self.audio_stream.write(chunk)
-                
+
         except sd.PortAudioError as e:
             print(f"音声出力エラー: {e}")
-            # ストリームを再初期化
+            # 再初期化を試みる
             self._initialize_audio_stream(device_id)
             raise
-        
+
+    def _play_wave(self, wave: np.ndarray) -> None:
+        """1文字分の波形を再生（音量適用、パディングは行わない）"""
+        if wave is None or wave.size == 0:
+            return
+        device_id = self.get_selected_device_id()
+        if device_id is None:
+            raise Exception("出力デバイスが選択されていません")
+
+        # ストリームがなければ初期化
+        if self.audio_stream is None:
+            self._initialize_audio_stream(device_id)
+        if self.audio_stream is None:
+            raise Exception("音声ストリームの初期化に失敗しました")
+
+        volume_factor = 10 ** (self.volume_level / 20)
+        adjusted = wave * volume_factor
+
+        # 余分なゼロ追加はしない。小チャンクで書き込み。
+        chunk_size = max(1, SAMPLES_PER_PIXEL * 8)
+        with self.stream_lock:
+            for i in range(0, len(adjusted), chunk_size):
+                chunk = adjusted[i:i + chunk_size]
+                self.audio_stream.write(chunk)
+
     def transmit_text(self, text: str) -> None:
         try:
-            # PTTをONに設定
+            # PTTをON
             self.ptt.set_ptt(True)
-            time.sleep(LATENCY)  # PTTプリディレイをレイテンシーと同じに
+            time.sleep(LATENCY)
 
-            # 送信用バッファ
-            waves = []
-            total_chars = len(text)
-
-            # 全文字の波形を一度に生成
+            # 各文字ごとに波形を生成して即時送信、タグ更新は送信前に行う
             for i, ch in enumerate(text):
-                wave = send_char(ch)
+                try:
+                    wave = send_char(ch)
+                except Exception as e:
+                    print(f"send_char エラー: {e}")
+                    wave = np.zeros(SAMPLES_PER_CHAR, dtype=np.float32)
+
                 if wave.size > 0:
-                    waves.append(wave)
-                    # 送信状況の表示を更新
+                    # タグ更新（送信開始と同時に色を変える）
                     self.output_display.config(state='normal')
-                    self.output_display.tag_remove("pending", f"1.{i}", f"1.{i+1}")
-                    self.output_display.tag_add("sent", f"1.{i}", f"1.{i+1}")
+                    try:
+                        self.output_display.tag_remove("pending", f"1.{i}", f"1.{i+1}")
+                        self.output_display.tag_add("sent", f"1.{i}", f"1.{i+1}")
+                    except tk.TclError:
+                        pass
                     self.output_display.config(state='disabled')
                     self.root.update()
-                    
-            # 一括送信
-            if waves:
-                self._play_waves(waves)
-            
+
+                    # 再生。再生エラーはログに出して中断する
+                    try:
+                        self._play_wave(wave)
+                    except Exception as e:
+                        print(f"再生エラー: {e}")
+                        messagebox.showerror("エラー", f"再生中にエラーが発生しました: {e}")
+                        break
+
         except Exception as e:
             print(f"送信エラー: {e}")
             messagebox.showerror("エラー", f"送信中にエラーが発生しました: {e}")
         finally:
-            time.sleep(LATENCY)  # PTTポストディレイをレイテンシーと同じに
-            # PTTをOFFに設定
+            time.sleep(LATENCY)
             self.ptt.set_ptt(False)
-            # 送信完了後もテキストを残す
             self.send_button.config(state='normal')
             
     def __del__(self):
