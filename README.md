@@ -42,7 +42,7 @@ python JAGUIHELL.py
 送信されるに合わせて順序文字に色が赤色に変わっていきます
 
 歯車マークを押すと設定画面に入れます。
-出力するサウンドカードの選択及びレベルに調整、０dBで出力するとひずみますので―20dB程度に設定してください
+出力するサウンドカードの選択及びレベルに調整、0dBで出力するとひずみますので-20dB程度に設定してください
 PTTを出力するComポート番号に設定が可能です。PTT出力はRTS出力、DTR出力いずれかが選べます。
 
 BDF フォントを変換する（例）：
@@ -65,3 +65,10 @@ python BDFconv.py k8x12.bdf
 - 実行環境の Python と依存パッケージは一致させてください（仮想環境推奨）。
 - PTT（シリアル制御）を利用する場合、`pyserial` が必要です。実行中の Python で以下を実行してインストールしてください:
 - `k8x12.bdf`  はここから使用しています <https://littlelimit.net/k8x12.htm> ライセンス条件に付いてはフリーライセンスです <https://littlelimit.net/font.htm#license>
+
+- 受信機能は組み込んでいないので、他ソフトを使用してください、有名どころではFLdigiやMixWなどがります。
+  * [FLdigi] (https://sourceforge.net/projects/fldigi/)
+  * [MixW] (https://mixw.net/)
+- 英語で開発されているソフトでは音声入出力の名称（日本語Windowsでは標準で「スピーカー」や「マイク」になる）がASCIIで表示できないと動作できなくなることがあります。
+FLdigi、VARAモデムなどでも動作に支障が出ますので、使用の際は音声州出力の名前をASCIIで表示できるもの（SPとか）に変更してください。
+[Win11での音声入出力の名称変更の方法](https://pc-karuma.net/how-to-rename-speaker-windows-11/)
