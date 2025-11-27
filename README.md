@@ -59,6 +59,7 @@ python BDFconv.py k8x12.bdf
 - `requirements.txt` — 依存パッケージ一覧
 - `LICENSE.txt` — ライセンス文書
 - `JAHELLTX.ico`, `無料の設定歯車アイコン.png` — アイコン／画像ファイル
+- `JAGUIHELL.wav` -変調された音声のサンプル（漢字を含む）　キャリア周波数1000Hzで変調されています。
 
 ## 注意事項
 - `glyphs.py` や `k8x12.bdf` はファイルサイズが大きいです。編集・再生成時は処理時間とメモリに注意してください。
