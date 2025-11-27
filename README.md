@@ -73,3 +73,81 @@ python BDFconv.py k8x12.bdf
 - 英語で開発されているソフトでは音声入出力の名称（日本語Windowsでは標準で「スピーカー」や「マイク」になる）がASCIIで表示できないと動作できなくなることがあります。
 FLdigi、VARAモデムなどでも動作に支障が出ますので、使用の際は音声州出力の名前をASCIIで表示できるもの（SPとか）に変更してください。
 [Win11での音声入出力の名称変更の方法](https://pc-karuma.net/how-to-rename-speaker-windows-11/)
+
+---
+
+# English Translation
+
+## Overview
+`JAGUIHELL` is a software for character transmission using the Hellschreiber method.  
+It supports sending Japanese (kanji, kana) as well as ASCII characters.  
+Transmission format is compatible with general-purpose HELL receiving software.
+
+## Features
+- Supports sending Japanese (kanji, kana) and ASCII
+- Glyph-based character conversion (font conversion script included)
+- Supports PTT (RTS/DTR) control
+- Standalone Windows executable provided (includes Python environment)
+
+## Installation
+
+### Windows (Distributed Executable)
+- Download and run [`JAGUIHELL.exe`](https://github.com/7k1aeu/JAGUIHELL/releases/latest/download/JAGUIHELL.exe). (File size is large because it includes Python.)
+
+### Running from Source (Other Environments)
+1. Clone the repository:
+bash
+git clone https://github.com/7k1aeu/JAGUIHELL.git
+2. Python virtual environment (optional):
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate  # Windows: venv\Scripts\activate
+    ```
+3. Install required packages:
+    ```bash
+    pip install -r requirements.txt
+    ```
+    *Check the contents of `requirements.txt` and install additional packages as necessary (e.g., Pillow).*
+
+### Usage
+Run the main script:
+```bash
+python JAGUIHELL.py
+```
+## How to Use
+Type characters to be sent into the upper window, and press "Send" in the middle to output audio via the sound card.  
+Three dots, a space, the main text, a space, and three dots will be added before and after the message.  
+As the transmission progresses, the corresponding characters change to red.
+
+Click the gear icon to access the settings.  
+You can select and adjust the output sound card and level. Do not output at 0dB as it will cause distortion; set to around -20dB.  
+The COM port number for PTT output can be set. You can choose either RTS or DTR for PTT output.
+
+To convert BDF fonts (example):
+```bash
+python BDFconv.py k8x12.bdf
+```
+The above is an example for converting a BDF file into a format usable in the repository. Please refer to instructions in the script for actual arguments and outputs.
+
+## Main Files
+- `JAGUIHELL.py` — Main script
+- `BDFconv.py` — Tool to convert BDF font (`.bdf`) to `glyphs.py` format
+- `glyphs.py` — Japanese glyph data (Python)
+- `k8x12.bdf` — BDF font file (for conversion)
+- `requirements.txt` — List of required packages
+- `LICENSE.txt` — License documentation
+- `JAHELLTX.ico`, `無料の設定歯車アイコン.png` — Icon/image files
+- `JAGUIHELL.wav` — Sample of modulated audio (includes kanji), modulated at a 1000Hz carrier frequency
+
+## Notes
+- `glyphs.py` and `k8x12.bdf` are large files. Please be mindful of processing time and memory when editing or regenerating.
+- Ensure the Python environment and required packages are matched (virtual environment recommended).
+- If using PTT (serial control), `pyserial` is required. Install it with the following command in your current Python environment:
+- `k8x12.bdf` is taken from here: <https://littlelimit.net/k8x12.htm>. License is free: <https://littlelimit.net/font.htm#license>
+
+- Reception functionality is not built-in. Use other software for reception. Well-known examples include FLdigi and MixW:
+  * [FLdigi](https://sourceforge.net/projects/fldigi/)
+  * [MixW](https://mixw.net/)
+- For software developed in English, if the name of the audio input/output (typically "Speaker" or "Microphone" on Japanese Windows) cannot be displayed in ASCII, it may not work.  
+  Even in FLdigi or VARA modem, such issues may occur. When using, change the name of the audio input/output device to something that can be displayed in ASCII (like "SP").
+[How to change the name of speakers/microphones on Windows 11](https://pc-karuma.net/how-to-rename-speaker-windows-11/)
