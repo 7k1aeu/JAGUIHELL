@@ -1,3 +1,4 @@
+﻿#!/usr/bin/env python3
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
@@ -88,11 +89,11 @@ class PTTControl:
 # ---- サウンド設定 ----
 FREQ = 1000        # トーン周波数（Hz）
 SAMPLE_RATE = 48000 # サンプルレート（Hz）
-PIXELS_PER_COLUMN = 14  # 1列あたりのピクセル数
-COLUMNS_PER_CHAR = 7    # 1文字あたりの列数
+PIXELS_PER_COLUMN = 14  # 1列あたりのピクセル数（14行）
+COLUMNS_PER_CHAR = 14   # 1文字あたりの列数を固定で14にする（ASCIIも日本語も14列）
 # 1ピクセルあたりの正確なサンプル数を計算（整数に丸める）
 SAMPLES_PER_PIXEL = int(SAMPLE_RATE * 0.004045)  # 約4.045ミリ秒
-# 1文字分の合計サンプル数
+# 1文字分の合計サンプル数（固定14列で計算）
 SAMPLES_PER_CHAR = SAMPLES_PER_PIXEL * PIXELS_PER_COLUMN * COLUMNS_PER_CHAR
 # 音声出力の設定
 BUFFER_SAMPLES = SAMPLES_PER_CHAR * 2  # バッファサイズを文字サイズの倍数に
@@ -104,55 +105,6 @@ class DeviceInfo:
         self.name: str = str(device_dict.get('name', ''))
         self.max_output_channels: int = int(device_dict.get('max_output_channels', 0))
 
-# ASCII文字のグリフデータ (ArduinoHellと同じ：各列14ビット)
-ASCII_GLYPHS = {
-    ' ': [0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000],
-    'A': [0x07fc, 0x0e60, 0x0c60, 0x0e60, 0x07fc, 0x0000, 0x0000],
-    'B': [0x0c0c, 0x0ffc, 0x0ccc, 0x0ccc, 0x0738, 0x0000, 0x0000],
-    'C': [0x0ffc, 0x0c0c, 0x0c0c, 0x0c0c, 0x0c0c, 0x0000, 0x0000],
-    'D': [0x0c0c, 0x0ffc, 0x0c0c, 0x0c0c, 0x07f8, 0x0000, 0x0000],
-    'E': [0x0ffc, 0x0ccc, 0x0ccc, 0x0c0c, 0x0c0c, 0x0000, 0x0000],
-    'F': [0x0ffc, 0x0cc0, 0x0cc0, 0x0c00, 0x0c00, 0x0000, 0x0000],
-    'G': [0x0ffc, 0x0c0c, 0x0c0c, 0x0ccc, 0x0cfc, 0x0000, 0x0000],
-    'H': [0x0ffc, 0x00c0, 0x00c0, 0x00c0, 0x0ffc, 0x0000, 0x0000],
-    'I': [0x0ffc, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000],
-    'J': [0x003c, 0x000c, 0x000c, 0x000c, 0x0ffc, 0x0000, 0x0000],
-    'K': [0x0ffc, 0x00c0, 0x00e0, 0x0330, 0x0e1c, 0x0000, 0x0000],
-    'L': [0x0ffc, 0x000c, 0x000c, 0x000c, 0x000c, 0x0000, 0x0000],
-    'M': [0x0ffc, 0x0600, 0x0300, 0x0600, 0x0ffc, 0x0000, 0x0000],
-    'N': [0x0ffc, 0x0700, 0x01c0, 0x0070, 0x0ffc, 0x0000, 0x0000],
-    'O': [0x0ffc, 0x0c0c, 0x0c0c, 0x0c0c, 0x0ffc, 0x0000, 0x0000],
-    'P': [0x0c0c, 0x0ffc, 0x0ccc, 0x0cc0, 0x0780, 0x0000, 0x0000],
-    'Q': [0x0ffc, 0x0c0c, 0x0c3c, 0x0ffc, 0x000f, 0x0000, 0x0000],
-    'R': [0x0ffc, 0x0cc0, 0x0cc0, 0x0cf0, 0x079c, 0x0000, 0x0000],
-    'S': [0x078c, 0x0ccc, 0x0ccc, 0x0ccc, 0x0c78, 0x0000, 0x0000],
-    'T': [0x0c00, 0x0c00, 0x0ffc, 0x0c00, 0x0c00, 0x0000, 0x0000],
-    'U': [0x0ff8, 0x000c, 0x000c, 0x000c, 0x0ff8, 0x0000, 0x0000],
-    'V': [0x0ffc, 0x0038, 0x00e0, 0x0380, 0x0e00, 0x0000, 0x0000],
-    'W': [0x0ff8, 0x000c, 0x00f8, 0x000c, 0x0ff8, 0x0000, 0x0000],
-    'X': [0x0e1c, 0x0330, 0x01e0, 0x0330, 0x0e1c, 0x0000, 0x0000],
-    'Y': [0x0e00, 0x0380, 0x00fc, 0x0380, 0x0e00, 0x0000, 0x0000],
-    'Z': [0x0c1c, 0x0c7c, 0x0ccc, 0x0f8c, 0x0e0c, 0x0000, 0x0000],
-    '0': [0x07f8, 0x0c0c, 0x0c0c, 0x0c0c, 0x07f8, 0x0000, 0x0000],
-    '1': [0x0300, 0x0600, 0x0ffc, 0x0000, 0x0000, 0x0000, 0x0000],
-    '2': [0x061c, 0x0c3c, 0x0ccc, 0x078c, 0x000c, 0x0000, 0x0000],
-    '3': [0x0006, 0x1806, 0x198c, 0x1f98, 0x00f0, 0x0000, 0x0000],
-    '4': [0x1fe0, 0x0060, 0x0060, 0x0ffc, 0x0060, 0x0000, 0x0000],
-    '5': [0x000c, 0x000c, 0x1f8c, 0x1998, 0x18f0, 0x0000, 0x0000],
-    '6': [0x07fc, 0x0c66, 0x18c6, 0x00c6, 0x007c, 0x0000, 0x0000],
-    '7': [0x181c, 0x1870, 0x19c0, 0x1f00, 0x1c00, 0x0000, 0x0000],
-    '8': [0x0f3c, 0x19e6, 0x18c6, 0x19e6, 0x0f3c, 0x0000, 0x0000],
-    '9': [0x0f80, 0x18c6, 0x18cc, 0x1818, 0x0ff0, 0x0000, 0x0000],
-    '*': [0x018c, 0x0198, 0x0ff0, 0x0198, 0x018c, 0x0000, 0x0000],
-    '.': [0x001c, 0x001c, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000],
-    '?': [0x1800, 0x1800, 0x19ce, 0x1f00, 0x0000, 0x0000, 0x0000],
-    '!': [0x1f9c, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000],
-    '(': [0x01e0, 0x0738, 0x1c0e, 0x0000, 0x0000, 0x0000, 0x0000],
-    ')': [0x1c0e, 0x0738, 0x01e0, 0x0000, 0x0000, 0x0000, 0x0000],
-    '#': [0x0330, 0x0ffc, 0x0330, 0x0ffc, 0x0330, 0x0000, 0x0000],
-    '$': [0x078c, 0x0ccc, 0x1ffe, 0x0ccc, 0x0c78, 0x0000, 0x0000],
-    '/': [0x001c, 0x0070, 0x01c0, 0x0700, 0x1c00, 0x0000, 0x0000],
-}
 
 def generate_tone(on: bool) -> np.ndarray:
     """1ピクセル分の波形を生成（サンプル数を正確に保つ）"""
@@ -171,62 +123,158 @@ def generate_silence(duration: float) -> np.ndarray:
 def load_glyphs() -> Dict[str, List[int]]:
     try:
         from glyphs import GLYPHS
-        return GLYPHS
+        # GLYPHS は BDF 変換ツールで 14 列化されている前提
+        # 万が一列数が12なら右側に 0 を追加して 14 にする
+        def _norm(g):
+            if not isinstance(g, (list,tuple)):
+                return [0]*14
+            lst = list(g)
+            if len(lst) >= 14:
+                return lst[:14]
+            lst.extend([0]*(14 - len(lst)))
+            return lst
+        return {k: _norm(v) for k,v in GLYPHS.items()}
     except ImportError:
         print("警告: グリフファイル (glyphs.py) が見つかりません。")
-        print("ASCII文字のみ使用可能です。")
+        print("日本語グリフは利用できません。")
         return {}
 
 GLYPHS = load_glyphs()
 
+def _ensure_14_columns(glyph_data: List[int]) -> List[int]:
+    """受け取ったグリフ列リストを必ず長さ14にする（不足は右パディング、超過は切り詰め）"""
+    if not isinstance(glyph_data, (list, tuple)):
+        return [0] * 14
+    cols = list(glyph_data)
+    if len(cols) >= 14:
+        return cols[:14]
+    cols.extend([0] * (14 - len(cols)))
+    return cols
+
+# ASCII文字のグリフデータ（デフォルトは空白中心の14列）
+# NOTE: 実行時に生成済みの `ascii_glyphs.py` があればそれを優先して読み込みます
+ASCII_GLYPHS = {
+    ' ': [0x0000] * 14,
+}
+
+# generated ascii_glyphs.py を優先して読み込み、なければ最小フォールバックを用意
+try:
+    from ascii_glyphs import GLYPHS as ASCII_SOURCE
+    def _normalize_to_14(cols: List[int]) -> List[int]:
+        if not isinstance(cols, (list, tuple)):
+            return [0] * 14
+        lst = list(cols)
+        if len(lst) >= 14:
+            return lst[:14]
+        lst.extend([0] * (14 - len(lst)))
+        return lst
+    ASCII_GLYPHS = {k: _normalize_to_14(v) for k, v in ASCII_SOURCE.items()}
+    _ASCII_AVAILABLE = True
+except Exception as _ascii_ex:
+    # ascii_glyphs.py が見つからない場合は空白のみ定義した安全なフォールバックを使用
+    ASCII_GLYPHS = {' ': [0x0000] * 14}
+    _ASCII_AVAILABLE = False
+    _ASCII_IMPORT_ERROR = _ascii_ex
+
+
+def _rows_to_cols(rows_list: List[int], cols: int = 14, rows: int = 14) -> List[int]:
+    """
+    行ベースのビットパターン (rows_list: 各要素が1行のビットパターン) を
+    列ベース (cols 個の整数、各整数は下→上にビットが詰められる) に変換する。
+    - rows_list[0] は上行、rows_list[rows-1] は下行と仮定する。
+    - 入力行のビットは左が MSB と仮定する（CXX の出力に合わせる）。
+    """
+    rlist = list(rows_list)
+    if len(rlist) < rows:
+        rlist.extend([0] * (rows - len(rlist)))
+    else:
+        rlist = rlist[:rows]
+
+    max_bitlen = 0
+    for v in rlist:
+        if v:
+            max_bitlen = max(max_bitlen, v.bit_length())
+    effective_width = max(max_bitlen, cols)
+
+    cols_out: List[int] = []
+    for col_index in range(cols):
+        col_val = 0
+        src_bitpos = effective_width - 1 - col_index
+        for row_index in range(rows):
+            row_word = rlist[row_index]
+            bit = (row_word >> src_bitpos) & 1 if src_bitpos >= 0 else 0
+            if bit:
+                out_bitpos = (rows - 1 - row_index)  # 下->上に詰める
+                col_val |= (1 << out_bitpos)
+        cols_out.append(col_val)
+    return cols_out
+
+def _count_nonzero(items: List[int]) -> int:
+    return sum(1 for v in items if v != 0)
+
 def send_char(ch: str) -> np.ndarray:
-    """1文字分の波形を生成（サンプル数を正確に保つ）"""
+    """1文字分の波形を生成（14x14固定の仕様に合わせる）
+    - ASCII は `ASCII_GLYPHS` を最優先で使用（大文字/小文字を順に試す）。
+    - 見つからなければ `GLYPHS` を参照する（日本語など）。
+    - グリフは与えられたまま信じて変換は行わない（行→列自動変換は行わない）。
+    """
     try:
-        # 文字間の同期を保つため、厳密なサンプル数で計算
-        total_samples = SAMPLES_PER_CHAR
+        glyph_data = None
+
+        # ASCII 優先（大文字→小文字→そのままの順）
+        if ord(ch) <= 0x7F:
+            candidates = [ch, ch.upper(), ch.lower()]
+            for c in candidates:
+                if c in ASCII_GLYPHS:
+                    glyph_data = ASCII_GLYPHS[c]
+                    break
+            # ASCII_GLYPHS に見つからなければ GLYPHS を参照（互換性のため）
+            if glyph_data is None:
+                for c in candidates:
+                    if c in GLYPHS:
+                        glyph_data = GLYPHS[c]
+                        break
+        else:
+            # 非ASCII: まず GLYPHS を直接参照
+            if ch in GLYPHS:
+                glyph_data = GLYPHS[ch]
+            else:
+                for c in (ch, ch.upper(), ch.lower()):
+                    if c in GLYPHS:
+                        glyph_data = GLYPHS[c]
+                        break
+
+        if glyph_data is None:
+            print(f"未定義の文字: {ch}")
+            return np.zeros(SAMPLES_PER_CHAR, dtype=np.float32)
+
+        # グリフは与えられた形式をそのまま使う（信頼）。列数を14に整形するのみ。
+        glyph_cols = _ensure_14_columns(glyph_data)
+
+        # 固定14列でバッファ長を計算
+        columns = COLUMNS_PER_CHAR
+        total_samples = SAMPLES_PER_PIXEL * PIXELS_PER_COLUMN * columns
         buffer = np.zeros(total_samples, dtype=np.float32)
         sample_index = 0
-        
-        if ord(ch) > 0x7F:  # 日本語文字
-            if ch not in GLYPHS:
-                print(f"未定義の文字: {ch}")
-                return buffer
-            glyph_data = GLYPHS[ch]
-            
-            # 日本語グリフのエンコード
-            for col in range(COLUMNS_PER_CHAR):
-                data = glyph_data[col]
-                for y in range(PIXELS_PER_COLUMN):
-                    bit = (data >> y) & 1
-                    wave = generate_tone(bit == 1)
-                    if sample_index + SAMPLES_PER_PIXEL <= total_samples:
-                        buffer[sample_index:sample_index + SAMPLES_PER_PIXEL] = wave
-                    sample_index += SAMPLES_PER_PIXEL
-                    
-        else:  # ASCII文字
-            ch = ch.upper()
-            if ch not in ASCII_GLYPHS:
-                print(f"未定義の文字: {ch}")
-                return buffer
-            glyph_data = ASCII_GLYPHS[ch]
-            
-            # ASCII文字のエンコード
-            for col in range(COLUMNS_PER_CHAR):
-                data = glyph_data[col]
-                for y in range(PIXELS_PER_COLUMN):
-                    bit = (data >> y) & 1
-                    wave = generate_tone(bit == 1)
-                    if sample_index + SAMPLES_PER_PIXEL <= total_samples:
-                        buffer[sample_index:sample_index + SAMPLES_PER_PIXEL] = wave
-                    sample_index += SAMPLES_PER_PIXEL
-        
-        # 文字の最後に短い無音区間を追加して同期を保つ
+
+        # 列単位でエンコード（各列は PIXELS_PER_COLUMN ビット）
+        for col in range(columns):
+            data = int(glyph_cols[col])
+            for y in range(PIXELS_PER_COLUMN):
+                bit = (data >> y) & 1
+                wave = generate_tone(bit == 1)
+                end = sample_index + SAMPLES_PER_PIXEL
+                if end <= total_samples:
+                    buffer[sample_index:end] = wave
+                sample_index = end
+
+        # 文字の最後に短い無音区間を追加して同期を保つ（可能なら）
         silence_samples = int(SAMPLE_RATE * 0.001)  # 1ms
         if sample_index + silence_samples <= total_samples:
             buffer[sample_index:sample_index + silence_samples] = 0
-        
+
         return buffer
-        
+
     except Exception as e:
         print(f"Error processing character '{ch}': {e}")
         return np.zeros(SAMPLES_PER_CHAR, dtype=np.float32)
@@ -239,30 +287,34 @@ class SettingsWindow:
         self.window.transient(parent)
         self.window.grab_set()
         self.app = app
-        
+
         # フォント設定
         default_font = ('Yu Gothic UI', 12)
-        
+
         # サウンドデバイス設定
         device_frame = ttk.LabelFrame(self.window, text="出力デバイス", padding=10)
         device_frame.pack(fill='x', padx=10, pady=5)
-        
+
         # デバイス選択
         self.device_var = tk.StringVar(value=self.app.device_var.get())
         self.device_combo = ttk.Combobox(
-            device_frame, 
+            device_frame,
             textvariable=self.device_var,
             font=default_font,
             state='readonly',
             values=self.app.device_combo['values']
         )
         self.device_combo.pack(fill='x', padx=5, pady=5)
-        self.device_combo.current(self.app.device_combo.current())
+        try:
+            self.device_combo.current(self.app.device_combo.current())
+        except Exception:
+            if self.app.device_combo['values']:
+                self.device_combo.current(0)
 
         # 音量設定フレーム
         volume_frame = ttk.LabelFrame(self.window, text="出力レベル", padding=10)
         volume_frame.pack(fill='x', padx=10, pady=5)
-        
+
         # 音量スケール
         self.volume_var = tk.DoubleVar(value=self.app.volume_level)
         self.volume_scale = ttk.Scale(
@@ -273,15 +325,15 @@ class SettingsWindow:
             variable=self.volume_var
         )
         self.volume_scale.pack(fill='x', padx=5, pady=5)
-        
+
         # dB値表示ラベル
         self.db_label = ttk.Label(volume_frame, font=default_font)
         self.db_label.pack(pady=5)
-        
+
         # 音量値が変更されたときのコールバック
         def on_volume_changed(event=None):
             self.db_label.configure(text=f"{self.volume_var.get():.1f} dB")
-        
+
         self.volume_scale.configure(command=on_volume_changed)
         on_volume_changed()  # 初期値を表示
 
@@ -289,9 +341,9 @@ class SettingsWindow:
         ptt_frame = ttk.LabelFrame(self.window, text="PTT制御", padding=10)
         ptt_frame.pack(fill='x', padx=10, pady=5)
 
-        # COMポート選択
-        ports = [port.device for port in serial.tools.list_ports.comports()]
-        self.port_var = tk.StringVar(value=self.app.ptt.port_name if self.app.ptt.port_name else '')
+        # COMポート選択 — 先頭に "なし" を追加
+        ports = ['なし'] + [port.device for port in serial.tools.list_ports.comports()]
+        self.port_var = tk.StringVar(value=(self.app.ptt.port_name if self.app.ptt.port_name else 'なし'))
         port_frame = ttk.Frame(ptt_frame)
         port_frame.pack(fill='x', padx=5, pady=5)
         ttk.Label(port_frame, text="COMポート:", font=default_font).pack(side='left')
@@ -303,11 +355,15 @@ class SettingsWindow:
             state='readonly'
         )
         self.port_combo.pack(side='left', padx=5, fill='x', expand=True)
-        
+        try:
+            self.port_combo.current(ports.index(self.port_var.get()))
+        except ValueError:
+            self.port_combo.current(0)
+
         # 制御線選択
         control_frame = ttk.Frame(ptt_frame)
         control_frame.pack(fill='x', padx=5, pady=5)
-        
+
         # RTS選択
         self.rts_var = tk.BooleanVar(value=self.app.ptt.use_rts)
         ttk.Checkbutton(
@@ -316,7 +372,7 @@ class SettingsWindow:
             variable=self.rts_var,
             style='Switch.TCheckbutton'
         ).pack(side='left', padx=10)
-        
+
         # DTR選択
         self.dtr_var = tk.BooleanVar(value=self.app.ptt.use_dtr)
         ttk.Checkbutton(
@@ -325,32 +381,47 @@ class SettingsWindow:
             variable=self.dtr_var,
             style='Switch.TCheckbutton'
         ).pack(side='left', padx=10)
-        
+
         # ボタンフレーム
         button_frame = ttk.Frame(self.window)
         button_frame.pack(fill='x', padx=10, pady=10)
         ttk.Button(button_frame, text="保存", command=self.save_settings).pack(side='right', padx=5)
         ttk.Button(button_frame, text="キャンセル", command=self.window.destroy).pack(side='right')
-        
+
     def save_settings(self) -> None:
         # デバイス選択を更新
-        current = self.device_combo.current()
-        self.app.device_combo.current(current)
-        self.app.device_var.set(self.device_var.get())
-        
+        try:
+            current = self.device_combo.current()
+            self.app.device_combo.current(current)
+            self.app.device_var.set(self.device_var.get())
+        except Exception:
+            pass
+
         # 音量レベルを更新
-        self.app.volume_level = self.volume_var.get()        # PTT設定を更新
+        self.app.volume_level = self.volume_var.get()
+
+        # PTT設定を更新
         port_name = self.port_var.get()
-        if port_name:
+
+        # 既存の接続は閉じる
+        try:
+            self.app.ptt.close()
+        except Exception:
+            pass
+
+        if port_name and port_name != 'なし':
             try:
-                self.app.ptt.close()  # 既存の接続を閉じる
-                # まずフラグを設定
+                # フラグを設定してポートを開く
                 self.app.ptt.use_rts = self.rts_var.get()
                 self.app.ptt.use_dtr = self.dtr_var.get()
-                # その後でポートを開く
-                self.app.ptt.open(port_name)  # 新しいポートで接続
+                self.app.ptt.open(port_name)
             except Exception as e:
                 messagebox.showerror("エラー", f"PTTポートのオープンに失敗しました: {e}")
+        else:
+            # 'なし' が選択された場合はポート情報をクリア
+            self.app.ptt.port_name = None
+            self.app.ptt.use_rts = False
+            self.app.ptt.use_dtr = False
 
         # 設定をINIファイルに保存
         config = configparser.ConfigParser()
@@ -359,15 +430,14 @@ class SettingsWindow:
             'volume_level': str(self.volume_var.get())
         }
         config['PTT'] = {
-            'port_name': port_name,
+            'port_name': (port_name if port_name and port_name != 'なし' else ''),
             'use_rts': str(self.rts_var.get()),
             'use_dtr': str(self.dtr_var.get())
         }
-        
-        # ファイルに書き込み
+
         with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
             config.write(f)
-        
+
         self.window.destroy()
 
 class HellschreiberGUI:
@@ -376,14 +446,14 @@ class HellschreiberGUI:
         self.root.title("ヘルシュライバー送信機")
         
         # 音量レベルの初期化
-        self.volume_level = 0  # デフォルトは0dB（最大）
+        self.volume_level = -20  # デフォルトは-20dB（-20dBFS）
 
         # ツールバーフレーム
         toolbar_frame = tk.Frame(root)
         toolbar_frame.pack(fill='x')
         
         # 設定アイコンの読み込み（インスタンス変数として保持）
-        icon_path = Path(os.path.dirname(os.path.abspath(__file__))) / '無料の設定歯車アイコン.png'
+        icon_path = Path(os.path.dirname(os.path.abspath(__file__))) / '歯車アイコン.png'
         self.settings_icon = tk.PhotoImage(file=str(icon_path))
         # アイコンのサイズを24x24に調整
         self.settings_icon = self.settings_icon.subsample(
@@ -400,9 +470,17 @@ class HellschreiberGUI:
             background=root.cget('background')
         )
         self.settings_button.pack(side='right', padx=5, pady=5)
-        
+
+
         # サウンドデバイスの取得とセットアップ
-        devices = sd.query_devices()
+        try:
+            devices = sd.query_devices()
+            self.audio_available = True
+        except Exception as e:
+            print(f"音声デバイス取得エラー: {e}")
+            devices = []
+            self.audio_available = False
+
         self.output_devices: List[Tuple[int, DeviceInfo]] = [
             (i, DeviceInfo(device)) for i, device in enumerate(devices) 
             if isinstance(device, dict) and int(device.get('max_output_channels', 0)) > 0
@@ -425,7 +503,7 @@ class HellschreiberGUI:
             try:
                 config.read(CONFIG_FILE, encoding='utf-8')
                 saved_device_name = config.get('Sound', 'device_name', fallback=None)
-                self.volume_level = float(config.get('Sound', 'volume_level', fallback='0'))
+                self.volume_level = float(config.get('Sound', 'volume_level', fallback='-20'))
 
                 # PTT設定の読み込み
                 ptt_port = config.get('PTT', 'port_name', fallback=None)
@@ -435,9 +513,9 @@ class HellschreiberGUI:
                         self.ptt.use_rts = config.getboolean('PTT', 'use_rts', fallback=False)
                         self.ptt.use_dtr = config.getboolean('PTT', 'use_dtr', fallback=False)
                         self.ptt.update_lines()
-                    except:
+                    except Exception:
                         pass
-            except:
+            except Exception:
                 pass
         
         # 保存されていたデバイスを探す
@@ -450,12 +528,24 @@ class HellschreiberGUI:
                 if device_names:
                     self.device_combo.current(0)
         else:  # 保存された設定がない場合はデフォルトデバイスを使用
-            default_device = sd.default.device[1]
-            for i, (dev_id, _) in enumerate(self.output_devices):
-                if dev_id == default_device:
-                    self.device_combo.current(i)
-                    break
+            try:
+                if self.audio_available:
+                    default_device = sd.default.device[1]
+                else:
+                    default_device = None
+            except Exception:
+                default_device = None
+
+            if default_device is not None:
+                for i, (dev_id, _) in enumerate(self.output_devices):
+                    if dev_id == default_device:
+                        self.device_combo.current(i)
+                        break
+                else:
+                    if device_names:
+                        self.device_combo.current(0)
             else:
+                # 音声が利用できない場合は空リストにしておく
                 if device_names:
                     self.device_combo.current(0)
         
@@ -504,6 +594,11 @@ class HellschreiberGUI:
             self.send_button.config(state='normal')
             return
 
+        # サウンド機能が利用可能か確認
+        if not getattr(self, 'audio_available', True):
+            messagebox.showerror("エラー", "音声デバイスが利用できません。設定を確認してください。")
+            return
+
         # 出力デバイスが選択されているか確認
         device_id = self.get_selected_device_id()
         if device_id is None:
@@ -516,6 +611,8 @@ class HellschreiberGUI:
         except Exception as e:
             message = f"オーディオストリームの初期化に失敗しました: {e}"
             print(message)
+            # 初期化に失敗したら音声機能を無効化
+            self.audio_available = False
             messagebox.showerror("エラー", message)
             return
 
@@ -562,19 +659,27 @@ class HellschreiberGUI:
                     dtype=np.float32
                 )
                 self.audio_stream.start()
-            except Exception:
+                self.audio_available = True
+            except Exception as ex:
+                # 音声関連の例外はここでキャッチしてフラグを切る
+                print(f"音声ストリーム初期化エラー: {ex}")
                 try:
                     if self.audio_stream is not None:
                         self.audio_stream.close()
                 except Exception:
                     pass
                 self.audio_stream = None
+                self.audio_available = False
+                # 上位で処理するため例外を投げる
                 raise
 
     def _play_waves(self, waves: List[np.ndarray]) -> None:
         """波形データのリストを再生する（余分なパディングをせずチャンク単位で書き込む）"""
         if not waves:
             return
+
+        if not getattr(self, 'audio_available', True):
+            raise Exception("音声デバイスが利用できません")
 
         device_id = self.get_selected_device_id()
         if device_id is None:
@@ -595,18 +700,38 @@ class HellschreiberGUI:
             with self.stream_lock:
                 for i in range(0, len(adjusted_wave), chunk_size):
                     chunk = adjusted_wave[i:i + chunk_size]
-                    self.audio_stream.write(chunk)
+                    try:
+                        self.audio_stream.write(chunk)
+                    except Exception as e:
+                        print(f"再生中エラー(write): {e}")
+                        self.audio_available = False
+                        # 再初期化を試みる
+                        try:
+                            self._initialize_audio_stream(device_id)
+                        except Exception:
+                            pass
+                        raise
 
         except sd.PortAudioError as e:
             print(f"音声出力エラー: {e}")
-            # 再初期化を試みる
-            self._initialize_audio_stream(device_id)
+            self.audio_available = False
+            try:
+                self._initialize_audio_stream(device_id)
+            except Exception:
+                pass
+            raise
+        except Exception:
+            # 既にログ出力済みの可能性があるので再送出
             raise
 
     def _play_wave(self, wave: np.ndarray) -> None:
         """1文字分の波形を再生（音量適用、パディングは行わない）"""
         if wave is None or wave.size == 0:
             return
+
+        if not getattr(self, 'audio_available', True):
+            raise Exception("音声デバイスが利用できません")
+
         device_id = self.get_selected_device_id()
         if device_id is None:
             raise Exception("出力デバイスが選択されていません")
@@ -625,7 +750,14 @@ class HellschreiberGUI:
         with self.stream_lock:
             for i in range(0, len(adjusted), chunk_size):
                 chunk = adjusted[i:i + chunk_size]
-                self.audio_stream.write(chunk)
+                try:
+                    self.audio_stream.write(chunk)
+                except Exception as e:
+                    print(f"再生中エラー(write): {e}")
+                    self.audio_available = False
+                    # ユーザに通知
+                    messagebox.showerror("エラー", f"再生中にエラーが発生しました: {e}")
+                    raise
 
     def transmit_text(self, text: str) -> None:
         try:

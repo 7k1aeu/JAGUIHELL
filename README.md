@@ -1,4 +1,4 @@
-# JAGUIHELL
+﻿# JAGUIHELL
 
 ## 概要
 `JAGUIHELL` はヘルシュライバー方式の文字送信ソフトウェアです。  
@@ -62,10 +62,9 @@ python BDFconv.py k8x12.bdf
 - `JAGUIHELL.wav` -変調された音声のサンプル（漢字を含む）　キャリア周波数1000Hzで変調されています。
 
 ## 注意事項
-- `glyphs.py` や `k8x12.bdf` はファイルサイズが大きいです。編集・再生成時は処理時間とメモリに注意してください。
+- `glyphs.py`  はファイルサイズが大きいです。編集・再生成時は処理時間とメモリに注意してください。
 - 実行環境の Python と依存パッケージは一致させてください（仮想環境推奨）。
 - PTT（シリアル制御）を利用する場合、`pyserial` が必要です。実行中の Python で以下を実行してインストールしてください:
-- `k8x12.bdf`  はここから使用しています <https://littlelimit.net/k8x12.htm> ライセンス条件に付いてはフリーライセンスです <https://littlelimit.net/font.htm#license>
 
 - 受信機能は組み込んでいないので、他ソフトを使用してください、有名どころではFLdigiやMixWなどがります。
   * [FLdigi] (https://sourceforge.net/projects/fldigi/)
@@ -73,6 +72,14 @@ python BDFconv.py k8x12.bdf
 - 英語で開発されているソフトでは音声入出力の名称（日本語Windowsでは標準で「スピーカー」や「マイク」になる）がASCIIで表示できないと動作できなくなることがあります。
 FLdigi、VARAモデムなどでも動作に支障が出ますので、使用の際は音声州出力の名前をASCIIで表示できるもの（SPとか）に変更してください。
 [Win11での音声入出力の名称変更の方法](https://pc-karuma.net/how-to-rename-speaker-windows-11/)
+
+変更履歴
+Version 1.0.0  2025/11/15 初版公開
+Version 1.0.1  　2025/12/3 修正
+- 音声出力のデフォルト値を0dBFS→-20dBFSに変更
+- 視認性向上のためフォントの変更　ASCII文字列についてはFldigiプロジェクトで作成されたCXXファイルから生成されたフォントに変更　日本語についてはk8x12.bdfからk12-2000-1.bdfに変更しま全角相当になりました。
+- READMEの修正
+- フォントを変換するためのツールの変更（Toolフォルダ内）
 
 ---
 
