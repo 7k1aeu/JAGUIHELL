@@ -81,7 +81,7 @@ FREQ = 1000
 SAMPLE_RATE = 48000
 PIXELS_PER_COLUMN = 14
 COLUMNS_PER_CHAR = 13   # default for CJK etc
-ASCII_COLUMNS = 12      # ascii narrower
+ASCII_COLUMNS = 9       # ascii layout: 1 pad + 7 core + 1 pad (ユーザ要望)
 SAMPLES_PER_PIXEL = int(SAMPLE_RATE * 0.004045)
 SAMPLES_PER_CHAR = SAMPLES_PER_PIXEL * PIXELS_PER_COLUMN * COLUMNS_PER_CHAR
 
@@ -90,6 +90,8 @@ def _samples_for_columns(cols: int) -> int:
 
 BUFFER_SAMPLES = SAMPLES_PER_CHAR * 2
 LATENCY = 0.2
+# inter-character gap in milliseconds (can be tuned to correct vertical sync drift)
+INTER_CHAR_GAP_MS = 3.2
 
 class DeviceInfo:
     def __init__(self, device_dict: Dict[str, Any]) -> None:
@@ -146,7 +148,8 @@ def _ensure_columns(glyph_data: List[int], cols: int = COLUMNS_PER_CHAR) -> List
 ASCII_GLYPHS = {' ': [0x0000] * ASCII_COLUMNS}
 try:
     from ascii_glyphs import GLYPHS as ASCII_SOURCE
-    def _normalize_to_columns(cols: List[int]) -> List[int]:
+    def _ensure_ascii_cols(cols: List[int]) -> List[int]:
+        # Accept regenerated ascii_glyphs as-is; just pad/truncate to ASCII_COLUMNS if needed
         if not isinstance(cols, (list, tuple)):
             return [0] * ASCII_COLUMNS
         lst = list(cols)
@@ -154,7 +157,8 @@ try:
             return lst[:ASCII_COLUMNS]
         lst.extend([0] * (ASCII_COLUMNS - len(lst)))
         return lst
-    ASCII_GLYPHS = {k: _normalize_to_columns(v) for k, v in ASCII_SOURCE.items()}
+
+    ASCII_GLYPHS = {k: _ensure_ascii_cols(v) for k, v in ASCII_SOURCE.items()}
     _ASCII_AVAILABLE = True
 except Exception:
     _ASCII_AVAILABLE = False
@@ -632,19 +636,30 @@ class HellschreiberGUI:
             time.sleep(LATENCY)
             waves: List[np.ndarray] = []
             durations_samples: List[int] = []
-            for ch in text:
+            # まず全文字分の波形を生成（再生中の都度生成コストを削減）
+            # ここで文字間ギャップ（無音）を挿入できるようにする
+            gap_samples = int(SAMPLE_RATE * (INTER_CHAR_GAP_MS / 1000.0)) if INTER_CHAR_GAP_MS and INTER_CHAR_GAP_MS > 0 else 0
+            silence_gap = np.zeros(gap_samples, dtype=np.float32) if gap_samples > 0 else None
+            for idx_ch, ch in enumerate(text):
                 try:
                     w = send_char(ch)
                 except Exception as e:
                     print(f"send_char エラー: {e}")
                     w = np.zeros(SAMPLES_PER_CHAR, dtype=np.float32)
                 waves.append(w)
-                durations_samples.append(w.shape[0])
+                # duration for marking includes trailing inter-character gap (except after last char)
+                dur = w.shape[0]
+                if idx_ch != len(text) - 1 and gap_samples > 0:
+                    waves.append(silence_gap)
+                    dur += gap_samples
+                durations_samples.append(dur)
             if not waves:
                 return
+            # 各文字を送信完了としてマークするタイミングを事前にスケジュール
             cumulative = 0
             for idx, samples in enumerate(durations_samples):
                 cumulative += samples
+                # 少し余裕を持たせてスケジュール（5ms余裕）
                 delay_ms = int((cumulative / float(SAMPLE_RATE)) * 1000.0) + 5
                 try:
                     self.root.after(delay_ms, lambda i=idx: self.mark_sent(i))
