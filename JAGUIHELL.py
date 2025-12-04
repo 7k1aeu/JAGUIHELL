@@ -8,14 +8,37 @@ from typing import Dict, Any, List, Tuple, Optional
 import sounddevice as sd
 import numpy as np
 import os
+import sys
 import configparser
 from pathlib import Path
 import serial
 import serial.tools.list_ports
 from glyphs import GLYPHS
 
+# PyInstallerの実行ファイル対応: リソースパスを取得する関数
+def get_resource_path(relative_path: str) -> Path:
+    """PyInstallerの実行ファイル内またはスクリプトのディレクトリからリソースパスを取得"""
+    try:
+        # PyInstallerで作成された一時フォルダ
+        base_path = sys._MEIPASS
+    except AttributeError:
+        # 通常のPython実行時
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return Path(base_path) / relative_path
+
+# PyInstallerの実行ファイル対応: 設定ファイルは実行ファイルと同じ場所に保存
+def get_config_path() -> Path:
+    """設定ファイルのパスを取得（実行ファイルと同じディレクトリ）"""
+    if getattr(sys, 'frozen', False):
+        # PyInstallerで実行ファイル化されている場合
+        base_path = Path(sys.executable).parent
+    else:
+        # 通常のPython実行時
+        base_path = Path(os.path.dirname(os.path.abspath(__file__)))
+    return base_path / 'JAGUIHELL.ini'
+
 # 設定ファイルのパス
-CONFIG_FILE = Path(os.path.dirname(os.path.abspath(__file__))) / 'JAGUIHELL.ini'
+CONFIG_FILE = get_config_path()
 
 # PTT制御クラス
 class PTTControl:
@@ -423,7 +446,7 @@ class SettingsWindow:
             self.app.ptt.use_rts = False
             self.app.ptt.use_dtr = False
 
-        # 設定をINIファイルに保存
+        # 設定をINIファイルに保存（CONFIG_FILEグローバル変数を使用）
         config = configparser.ConfigParser()
         config['Sound'] = {
             'device_name': self.device_var.get(),
@@ -435,8 +458,13 @@ class SettingsWindow:
             'use_dtr': str(self.dtr_var.get())
         }
 
-        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-            config.write(f)
+        try:
+            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+                config.write(f)
+            print(f"設定を保存しました: {CONFIG_FILE}")
+        except Exception as e:
+            messagebox.showerror("エラー", f"設定ファイルの保存に失敗しました: {e}")
+            print(f"設定保存エラー: {e}")
 
         self.window.destroy()
 
@@ -452,14 +480,18 @@ class HellschreiberGUI:
         toolbar_frame = tk.Frame(root)
         toolbar_frame.pack(fill='x')
         
-        # 設定アイコンの読み込み（インスタンス変数として保持）
-        icon_path = Path(os.path.dirname(os.path.abspath(__file__))) / '歯車アイコン.png'
-        self.settings_icon = tk.PhotoImage(file=str(icon_path))
-        # アイコンのサイズを24x24に調整
-        self.settings_icon = self.settings_icon.subsample(
-            max(1, self.settings_icon.width() // 24),
-            max(1, self.settings_icon.height() // 24)
-        )
+        # 設定アイコンの読み込み（PyInstaller対応）
+        icon_path = get_resource_path('歯車アイコン.png')
+        try:
+            self.settings_icon = tk.PhotoImage(file=str(icon_path))
+            # アイコンのサイズを24x24に調整
+            self.settings_icon = self.settings_icon.subsample(
+                max(1, self.settings_icon.width() // 24),
+                max(1, self.settings_icon.height() // 24)
+            )
+        except Exception as e:
+            print(f"アイコン読み込みエラー: {e}")
+            self.settings_icon = None
         
         # 設定ボタン（右寄せ）
         self.settings_button = tk.Button(
