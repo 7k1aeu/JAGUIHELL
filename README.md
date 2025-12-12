@@ -1,7 +1,5 @@
 # JAGUIHELL
 
-# JAGUIHELL
-
 ## 概要
 `JAGUIHELL` はヘルシュライバー方式の文字送信ソフトウェアです。  
 日本語（漢字・かな）および ASCII の送信に対応しています。  
