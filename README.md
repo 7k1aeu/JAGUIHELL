@@ -13,8 +13,9 @@
 
 ## インストール
 
-### Windows （配布実行ファイル）
--[`JAGUIHELL.exe`](https://github.com/7k1aeu/JAGUIHELL/releases/latest/download/JAGUIHELL.exe)  をダウンロードして実行してください（Python を含むためファイルサイズが大きくなります）。
+### Windows/Mac （配布実行ファイル）
+[最新リリース](https://github.com/7k1aeu/JAGUIHELL/releases/latest/)
+からexeファイルをダウンロードして実行してください（Python を含むためファイルサイズが大きくなります）。
 
 ### ソースから実行（その他の環境）
 1. リポジトリをクローン:
@@ -54,7 +55,7 @@ PTTを出力するComポート番号に設定が可能です。PTT出力はRTS�
 - `requirements.txt` — 依存パッケージ一覧
 - `LICENSE.txt` — ライセンス文書
 - `JAHELLTX.ico`, `歯車アイコン.png` — アイコン／画像ファイル
-- `JAGUIHELL.wav` — サンプル（1000Hz キャリアで変調）
+- `JAGUIHELL.wav` — 生成音声サンプル（1000Hz キャリアで変調）
 
 ### tools ディレクトリ（主なツール）
 - `BDFconv.py` — BDF フォント（`.bdf`）を `glyphs.py` 形式に変換（グリフ確認機能あり）
